@@ -40,7 +40,6 @@ export class DetailsPage extends BasePage {
   fileDetailsExpirationTimeSelector = 'p-file-details-expiration-time';
   fileDetailsFileIdSelector = 'p-file-details-file-id';
   transactionDescriptionSelector = 'p-description-field';
-  breadCrumbItemSelector = 'breadcrumb-item-';
 
   constructor(window: Page) {
     super(window);
@@ -238,9 +237,5 @@ export class DetailsPage extends BasePage {
 
   async getTransactionDescription() {
     return await this.getText(this.transactionDescriptionSelector);
-  }
-
-  async getBreadCrumbItem(index: number) {
-    return this.window.getByTestId(`${this.breadCrumbItemSelector}${index}`);
   }
 }

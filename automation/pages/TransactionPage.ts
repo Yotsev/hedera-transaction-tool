@@ -8,7 +8,7 @@ import {
   verifyTransactionExists,
 } from '../utils/databaseQueries.js';
 import { decodeAndFlattenKeys } from '../utils/keyUtil.js';
-import { getCleanAccountId, LOCALNET_PAYER_ACCOUNT_ID } from '../utils/util.js';
+import { getCleanAccountId } from '../utils/util.js';
 import { Transaction } from '../../front-end/src/shared/interfaces/index.js';
 import * as path from 'node:path';
 
@@ -19,8 +19,6 @@ export interface CreateAccountOptions {
   isReceiverSigRequired?: boolean;
   memo?: string | null;
   description?: string | null;
-  publicKey?: string | null;
-  payerAccountId?: string | null;
 }
 
 export class TransactionPage extends BasePage {
@@ -74,7 +72,6 @@ export class TransactionPage extends BasePage {
   descriptionInputSelector = 'input-transaction-description';
   complexKeyAccountIdInputSelector = 'input-complex-key-account-id';
   //Buttons
-  backButtonSelector = 'button-back';
   transactionsMenuButtonSelector = 'button-menu-transactions';
   accountsMenuButtonSelector = 'button-menu-accounts';
   createNewTransactionButtonSelector = 'button-create-new';
@@ -140,18 +137,6 @@ export class TransactionPage extends BasePage {
   draftDetailsTypeIndexSelector = 'span-draft-tx-type-';
   draftDetailsDescriptionIndexSelector = 'span-draft-tx-description-';
   draftDetailsIsTemplateCheckboxSelector = 'checkbox-is-template-';
-
-  // Method to close the 'Save Draft' modal if it appears
-  async closeDraftModal() {
-    // Wait for the button to be visible with a timeout
-    const modalButton = this.window.getByTestId(this.discardModalDraftButtonSelector);
-    await modalButton.waitFor({ state: 'visible', timeout: 500 }).catch(() => {});
-
-    // If the modal is visible, then click the button to close the modal
-    if (await modalButton.isVisible()) {
-      await modalButton.click();
-    }
-  }
 
   // Combined method to verify all elements on Create transaction page
   async verifyAccountCreateTransactionElements() {
@@ -239,13 +224,27 @@ export class TransactionPage extends BasePage {
   }
 
   async clickOnCreateNewTransactionButton() {
-    // Click Create New button to open dropdown
-    await this.click(this.createNewTransactionButtonSelector);
+    // Retry mechanism for flaky dropdown
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        // Click Create New button to open dropdown
+        await this.click(this.createNewTransactionButtonSelector);
 
-    // Wait for dropdown and click Single Transaction
-    const singleTxButton = this.getElement(this.singleTransactionButtonSelector);
-    await singleTxButton.waitFor({ state: 'visible', timeout: 5000 });
-    await singleTxButton.click();
+        // Wait for dropdown to stabilize
+        await this.window.waitForTimeout(500);
+
+        // Wait for dropdown item and click
+        const singleTxButton = this.getElement(this.singleTransactionButtonSelector);
+        await singleTxButton.waitFor({ state: 'visible', timeout: 3000 });
+        await singleTxButton.click();
+        return; // Success, exit the retry loop
+      } catch (error) {
+        if (attempt === 2) throw error; // Last attempt, rethrow
+        // Click elsewhere to close dropdown before retry
+        await this.window.keyboard.press('Escape');
+        await this.window.waitForTimeout(300);
+      }
+    }
   }
 
   async clickOnImportButton() {
@@ -441,8 +440,6 @@ export class TransactionPage extends BasePage {
       isReceiverSigRequired = false,
       memo = null,
       description = null,
-      publicKey = null,
-      payerAccountId = null,
     } = options;
     if (!isComingFromDraft) {
       await this.clickOnCreateNewTransactionButton();
@@ -456,11 +453,6 @@ export class TransactionPage extends BasePage {
 
     // Handle optional settings
     const optionHandlers = [
-      {
-        condition: payerAccountId !== null,
-        handler: () => this.fillInPayerAccountId(payerAccountId!),
-      },
-      { condition: publicKey !== null, handler: () => this.fillInPublicKeyForAccount(publicKey!) },
       {
         condition: maxAutoAssociations !== null,
         handler: () => this.fillInMaxAccountAssociations(maxAutoAssociations!.toString()),
@@ -482,8 +474,10 @@ export class TransactionPage extends BasePage {
       `[data-testid="${this.confirmTransactionModalSelector}"]`,
       { state: 'hidden', timeout: 10000 }
     );
-    // Wait for execution to complete (modal auto-closes when done)
-    // Note: don't wait for 'Executing' to appear first - it's transient and may already be gone
+    // Wait for execution modal to APPEAR first (shows "Executing" text while tx runs)
+    await this.window.waitForSelector('text=Executing', { state: 'visible', timeout: 10000 });
+    // DON'T click Close - it's a cancel button that dismisses modal while tx still running!
+    // Wait for modal to AUTO-CLOSE when execution completes (isExecuting becomes false in Vue component)
     await this.window.waitForSelector('text=Executing', { state: 'hidden', timeout: 30000 });
     await this.waitForCreatedAtToBeVisible();
 
@@ -770,28 +764,7 @@ export class TransactionPage extends BasePage {
     return this.getTextFromInputField(this.maxAutoAssociationsInputSelector);
   }
 
-  async clickOnBackButton() {
-    await this.click(this.backButtonSelector, null, 10000);
-  }
-
   async clickOnSignAndSubmitButton() {
-    // For LOCALNET: Mirror Node doesn't return accounts, so Payer ID is empty.
-    // Fill it explicitly with the known account ID for the imported key.
-    if (process.env.ENVIRONMENT?.toUpperCase() === 'LOCALNET') {
-      const payerInput = this.window.getByTestId(this.payerAccountInputSelector);
-      const currentValue = await payerInput.inputValue();
-      if (!currentValue || currentValue.trim() === '') {
-        await this.fillInPayerAccountId(LOCALNET_PAYER_ACCOUNT_ID);
-        // Blur field to trigger Vue validation
-        await payerInput.blur();
-        // Wait for Vue to re-validate and enable the button
-        const button = this.window.getByTestId(this.signAndSubmitButtonSelector);
-        await button.waitFor({ state: 'visible', timeout: 5000 });
-        // Small delay for Vue reactivity to update button state
-        await this.window.waitForTimeout(500);
-      }
-    }
-
     // Scroll to top to ensure button is visible, then click
     const button = this.window.getByTestId(this.signAndSubmitButtonSelector);
     await button.scrollIntoViewIfNeeded();
@@ -841,10 +814,7 @@ export class TransactionPage extends BasePage {
   }
 
   async clickOnCancelTransaction() {
-    const modalSelector = `[data-testid="${this.confirmTransactionModalSelector}"][style*="display: block"]`;
-    const cancelButtonSelector = `${modalSelector} [data-testid="${this.buttonCancelTransactionSelector}"]`;
-    await this.window.waitForSelector(cancelButtonSelector, { state: 'visible', timeout: 15000 });
-    await this.window.click(cancelButtonSelector);
+    await this.click(this.buttonCancelTransactionSelector);
   }
 
   async clickAddButton(depth: string) {

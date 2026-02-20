@@ -8,7 +8,6 @@ import {
   closeApp,
   generateRandomEmail,
   generateRandomPassword,
-  getPrivateKeyEnv,
   setupApp,
   setupEnvironmentForTransactions,
   waitForValidStart,
@@ -69,7 +68,7 @@ test.describe.skip('Organization Regression tests', () => {
       globalCredentials.password,
     );
 
-    await setupEnvironmentForTransactions(window, getPrivateKeyEnv());
+    await setupEnvironmentForTransactions(window, process.env.PRIVATE_KEY);
 
     // Set complex account for transactions
     await organizationPage.addComplexKeyAccountWithNestedThresholds(totalUsers);
@@ -126,7 +125,7 @@ test.describe.skip('Organization Regression tests', () => {
     await organizationPage.clickOnHistoryTab();
     const transactionDetails = await organizationPage.getHistoryTransactionDetails(txId ?? '');
     expect(transactionDetails?.transactionId).toBe(txId);
-    expect(transactionDetails?.transactionType).toBe('Account Update');
+    expect(transactionDetails?.transactionType).toBe('Account Update Transaction');
     expect(transactionDetails?.validStart).toBeTruthy();
     expect(transactionDetails?.detailsButton).toBe(true);
     expect(transactionDetails?.status).toBe('SUCCESS');
@@ -161,7 +160,7 @@ test.describe.skip('Organization Regression tests', () => {
     await organizationPage.clickOnHistoryTab();
     const transactionDetails = await organizationPage.getHistoryTransactionDetails(txId ?? '');
     expect(transactionDetails?.transactionId).toBe(txId);
-    expect(transactionDetails?.transactionType).toBe('Transfer');
+    expect(transactionDetails?.transactionType).toBe('Transfer Transaction');
     expect(transactionDetails?.validStart).toBeTruthy();
     expect(transactionDetails?.detailsButton).toBe(true);
     expect(transactionDetails?.status).toBe('SUCCESS');

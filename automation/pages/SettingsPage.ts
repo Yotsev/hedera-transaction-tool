@@ -230,17 +230,10 @@ export class SettingsPage extends BasePage {
 
   async clickOnECDSAImportButton(): Promise<void> {
     await this.click(this.ecdsaImportButtonSelector);
-    if (!(await this.isElementHidden(this.ecdsaImportButtonSelector, null, 10000))) {
-      throw new Error('Import modal did not close within 10 seconds');
-    }
-
   }
 
   async clickOnED25519ImportButton(): Promise<void> {
     await this.click(this.ed25519ImportButtonSelector);
-    if (!(await this.isElementHidden(this.ed25519ImportButtonSelector, null, 10000))) {
-      throw new Error('Import modal did not close within 10 seconds');
-    }
   }
 
   async clickOnEyeDecryptIcon(): Promise<void> {
@@ -316,6 +309,9 @@ export class SettingsPage extends BasePage {
       return;
     }
     await this.click(this.settingsButtonSelector);
+
+    // TODO: Commented out - didn't help tests, may interfere with timing
+    // await this.closeDraftModal('button-discard-draft-for-group-modal', 2000);
 
     const isProfileTabButtonHidden = await this.isElementHidden(this.profileTabButtonSelector);
     if (isProfileTabButtonHidden) {

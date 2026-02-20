@@ -7,7 +7,6 @@ import {
   closeApp,
   generateRandomEmail,
   generateRandomPassword,
-  getPrivateKeyEnv,
   setupApp,
   setupEnvironmentForTransactions,
 } from '../utils/util.js';
@@ -68,7 +67,7 @@ test.describe('Organization Notification tests', () => {
       globalCredentials.password,
     );
 
-    await setupEnvironmentForTransactions(window, getPrivateKeyEnv());
+    await setupEnvironmentForTransactions(window, process.env.PRIVATE_KEY);
 
     // Set complex account for transactions
     await organizationPage.addComplexKeyAccountForTransactions();

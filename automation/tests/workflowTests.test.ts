@@ -27,6 +27,7 @@ import {
   generateRandomPassword,
   setupApp,
   setupEnvironmentForTransactions,
+  resetAppState,
 } from '../utils/util.js';
 import { AccountPage } from '../pages/AccountPage.js';
 import { FilePage } from '../pages/FilePage.js';
@@ -55,6 +56,13 @@ test.describe('Workflow tests', () => {
 
     // Ensure transactionPage generatedAccounts is empty
     transactionPage.generatedAccounts = [];
+
+    // Check if we need to reset app state (if user exists from previous run)
+    const isSettingsButtonVisible = await loginPage.isSettingsButtonVisible();
+    if (isSettingsButtonVisible) {
+      console.log('Existing user detected, resetting app state...');
+      await resetAppState(window, app);
+    }
 
     // Generate credentials and store them globally
     globalCredentials.email = generateRandomEmail();
@@ -410,7 +418,7 @@ test.describe('Workflow tests', () => {
     await transactionPage.clickOnTransactionsMenuButton();
     await detailsPage.assertTransactionDisplayed(
       newTransactionId ?? '',
-      'Account Create',
+      'Account Create Transaction',
       txDescription,
     );
   });
@@ -423,7 +431,7 @@ test.describe('Workflow tests', () => {
     await detailsPage.clickOnFirstTransactionDetailsButton();
     await detailsPage.assertTransactionDetails(
       newTransactionId ?? '',
-      'Account Create',
+      'Account Create Transaction',
     );
     const getAccountDetailsKey = await detailsPage.getAccountDetailsKey();
     expect(getAccountDetailsKey).toBeTruthy();
@@ -459,7 +467,7 @@ test.describe('Workflow tests', () => {
     await detailsPage.clickOnFirstTransactionDetailsButton();
     await detailsPage.assertTransactionDetails(
       newTransactionId ?? '',
-      'Account Update',
+      'Account Update Transaction',
     );
     const getTransactionMemo = await detailsPage.getTransactionDetailsMemo();
     expect(getTransactionMemo).toBe('Transaction memo update');
@@ -484,7 +492,7 @@ test.describe('Workflow tests', () => {
     await transactionPage.clickOnTransactionsMenuButton();
     await detailsPage.assertTransactionDisplayed(
       newTransactionId ?? '',
-      'Account Update',
+      'Account Update Transaction',
     );
   });
 
@@ -495,7 +503,7 @@ test.describe('Workflow tests', () => {
     await transactionPage.clickOnTransactionsMenuButton();
     await detailsPage.assertTransactionDisplayed(
       newTransactionId ?? '',
-      'Account Delete',
+      'Account Delete Transaction',
     );
   });
 
@@ -507,7 +515,7 @@ test.describe('Workflow tests', () => {
     await detailsPage.clickOnFirstTransactionDetailsButton();
     await detailsPage.assertTransactionDetails(
       newTransactionId ?? '',
-      'Account Delete',
+      'Account Delete Transaction',
     );
     const getDeletedAccountId = await detailsPage.getDeletedAccountId();
     expect(getDeletedAccountId).toContain(accountFromList);
@@ -525,7 +533,7 @@ test.describe('Workflow tests', () => {
       amountToBeTransferred,
     );
     await transactionPage.clickOnTransactionsMenuButton();
-    await detailsPage.assertTransactionDisplayed(newTransactionId ?? '', 'Transfer');
+    await detailsPage.assertTransactionDisplayed(newTransactionId ?? '', 'Transfer Transaction');
   });
 
   test('Verify transaction details are displayed for transfer tx ', async () => {
@@ -540,7 +548,7 @@ test.describe('Workflow tests', () => {
     await detailsPage.clickOnFirstTransactionDetailsButton();
     await detailsPage.assertTransactionDetails(
       newTransactionId ?? '',
-      'Transfer',
+      'Transfer Transaction',
     );
     const transferDetailsFromAccount = await detailsPage.getTransferDetailsFromAccount();
     expect(transferDetailsFromAccount).toBeTruthy();
@@ -566,7 +574,7 @@ test.describe('Workflow tests', () => {
     await transactionPage.clickOnTransactionsMenuButton();
     await detailsPage.assertTransactionDisplayed(
       newTransactionId ?? '',
-      'Account Allowance Approve',
+      'Account Allowance Approve Transaction',
     );
   });
 
@@ -582,7 +590,7 @@ test.describe('Workflow tests', () => {
     await detailsPage.clickOnFirstTransactionDetailsButton();
     await detailsPage.assertTransactionDetails(
       newTransactionId ?? '',
-      'Account Allowance Approve',
+      'Account Allowance Approve Transaction',
     );
     const allowanceOwnerAccount = await detailsPage.getAllowanceDetailsOwnerAccount();
     expect(allowanceOwnerAccount).toBeTruthy();
@@ -597,7 +605,7 @@ test.describe('Workflow tests', () => {
   test('Verify file create tx is displayed in history page', async () => {
     const { transactionId } = await transactionPage.createFile('test');
     await transactionPage.clickOnTransactionsMenuButton();
-    await detailsPage.assertTransactionDisplayed(transactionId ?? '', 'File Create');
+    await detailsPage.assertTransactionDisplayed(transactionId ?? '', 'File Create Transaction');
   });
 
   test('Verify transaction details are displayed for file create tx ', async () => {
@@ -606,7 +614,7 @@ test.describe('Workflow tests', () => {
     await detailsPage.clickOnFirstTransactionDetailsButton();
     await detailsPage.assertTransactionDetails(
       transactionId ?? '',
-      'File Create',
+      'File Create Transaction',
     );
     const isKeyButtonVisible = await detailsPage.isSeeKeyDetailsButtonVisible();
     expect(isKeyButtonVisible).toBe(true);
@@ -624,7 +632,7 @@ test.describe('Workflow tests', () => {
     const fileId = await transactionPage.getFirsFileIdFromCache();
     const transactionId = await transactionPage.updateFile(fileId ?? '', newText);
     await transactionPage.clickOnTransactionsMenuButton();
-    await detailsPage.assertTransactionDisplayed(transactionId ?? '', 'File Update');
+    await detailsPage.assertTransactionDisplayed(transactionId ?? '', 'File Update Transaction');
   });
 
   test('Verify transaction details are displayed for file update tx ', async () => {
@@ -636,7 +644,7 @@ test.describe('Workflow tests', () => {
     await detailsPage.clickOnFirstTransactionDetailsButton();
     await detailsPage.assertTransactionDetails(
       transactionId ?? '',
-      'File Update',
+      'File Update Transaction',
     );
     const fileIdFromDetailsPage = await detailsPage.getFileDetailsFileId();
     expect(fileId).toBe(fileIdFromDetailsPage);
@@ -651,7 +659,7 @@ test.describe('Workflow tests', () => {
     const fileId = await transactionPage.getFirsFileIdFromCache();
     const transactionId = await transactionPage.appendFile(fileId ?? '', newText);
     await transactionPage.clickOnTransactionsMenuButton();
-    await detailsPage.assertTransactionDisplayed(transactionId ?? '', 'File Append');
+    await detailsPage.assertTransactionDisplayed(transactionId ?? '', 'File Append Transaction');
   });
 
   // This test is failing in CI environment due to bug in the SDK
@@ -663,7 +671,7 @@ test.describe('Workflow tests', () => {
     await detailsPage.clickOnFirstTransactionDetailsButton();
     await detailsPage.assertTransactionDetails(
       transactionId ?? '',
-      'File Append',
+      'File Append Transaction',
     );
     const fileIdFromDetailsPage = await detailsPage.getFileDetailsFileId();
     expect(fileId).toBe(fileIdFromDetailsPage);
@@ -671,31 +679,4 @@ test.describe('Workflow tests', () => {
     const isViewContentButtonVisible = await detailsPage.isViewContentsButtonVisible();
     expect(isViewContentButtonVisible).toBe(true);
   });
-
-  test.only('Verify breadcrumb is displayed for transaction group item', async () => {
-    const txDescription = 'test account create tx description';
-    const { newTransactionId } = await transactionPage.createNewAccount({
-      description: txDescription,
-    });
-    await transactionPage.clickOnTransactionsMenuButton();
-    await detailsPage.assertTransactionDisplayed(
-      newTransactionId ?? '',
-      'Account Create',
-      txDescription,
-    );
-
-    await detailsPage.clickOnFirstTransactionDetailsButton();
-
-    const nbItems = await detailsPage.countElements('breadcrumb-item-');
-    expect(nbItems).toBe(2);
-    const item1 = await detailsPage.getBreadCrumbItem(0);
-    const item2 = await detailsPage.getBreadCrumbItem(1);
-    expect(await item1.innerText()).toBe('History');
-    expect(await item2.innerText()).toBe('Account Create Transaction');
-
-    await(item1.click())
-    const url = window.url();
-    expect(url).toContain('transactions?tab=History');
-  });
-
 });

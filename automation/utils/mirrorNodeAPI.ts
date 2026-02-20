@@ -1,12 +1,12 @@
 import axios from 'axios';
 import retry from 'async-retry';
 
-import { formatTransactionId, getNetworkEnv } from './util.js';
+import { formatTransactionId } from './util.js';
 import { AccountInfo, AccountsResponse } from '../../front-end/src/shared/interfaces/index.js';
 
  const getBaseURL = () => {
-   const network = getNetworkEnv().toUpperCase();
-   switch (network) {
+   const env = process.env.ENVIRONMENT;
+   switch (env?.toUpperCase()) {
      case 'TESTNET':
        return 'https://testnet.mirrornode.hedera.com/api/v1';
      case 'PREVIEWNET':
@@ -98,6 +98,8 @@ export const getTransactionDetails = async (transactionId: string) => {
     `transactions/${formatedTransactionId}`,
     {},
     result => result && result.transactions && result.transactions.length > 0,
+    45000,  // Increased timeout to 45 seconds for mirror node indexing
+    3000,   // Check every 3 seconds (15 retries max)
   );
 };
 

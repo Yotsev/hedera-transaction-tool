@@ -7,9 +7,9 @@ import {
   closeApp,
   generateRandomEmail,
   generateRandomPassword,
-  getOperatorKeyEnv,
   setupApp,
   setupEnvironmentForTransactions,
+  resetAppState,
 } from '../utils/util.js';
 import { Transaction } from '../../front-end/src/shared/interfaces/index.js';
 
@@ -30,6 +30,13 @@ test.describe('Transaction tests', () => {
 
     // Ensure transactionPage generatedAccounts is empty
     transactionPage.generatedAccounts = [];
+
+    // Check if we need to reset app state (if user exists from previous run)
+    const isSettingsButtonVisible = await loginPage.isSettingsButtonVisible();
+    if (isSettingsButtonVisible) {
+      console.log('Existing user detected, resetting app state...');
+      await resetAppState(window, app);
+    }
 
     // Generate credentials and store them globally
     globalCredentials.email = generateRandomEmail();
@@ -250,7 +257,7 @@ test.describe('Transaction tests', () => {
   });
 
   test('Verify that system account can be updated without account key using a superUser as the fee payer', async () => {
-    await setupEnvironmentForTransactions(window, getOperatorKeyEnv());
+    await setupEnvironmentForTransactions(window, process.env.OPERATOR_KEY);
     const newPublicKey = await transactionPage.generateRandomPublicKey();
     const transactionId = await transactionPage.updateAccountKey('0.0.100', newPublicKey, '0.0.2');
 
