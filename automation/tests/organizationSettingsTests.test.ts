@@ -185,7 +185,7 @@ test.describe('Organization Settings tests', () => {
     expect(isButtonVisible).toBe(true);
   });
 
-  test.only('Verify user can restore account with new mnemonic phrase', async () => {
+  test('Verify user can restore account with new mnemonic phrase', async () => {
     test.slow();
     const publicKeyBeforeReset = await organizationPage.getFirstPublicKeyByEmail(firstUser.email);
     const userId = await organizationPage.getUserIdByEmail(firstUser.email);
