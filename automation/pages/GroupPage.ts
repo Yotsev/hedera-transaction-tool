@@ -376,9 +376,11 @@ export class GroupPage extends BasePage {
   }
 
   async clickOnCancelAllButton() {
-    // Skip loader wait - just wait for Cancel All button to be visible
-    await this.waitForElementToBeVisible(this.organizationPage.cancelAllTransactionsButtonSelector, 10000);
-    await this.click(this.organizationPage.cancelAllTransactionsButtonSelector);
+    const dropdownSelector = 'button-more-dropdown-lg';
+    const cancelItemSelector = 'button-more-dropdown-lg-item-Cancel All';
+    await this.waitForElementToBeVisible(dropdownSelector, 15000);
+    await this.click(dropdownSelector);
+    await this.click(cancelItemSelector);
   }
 
   async clickOnConfirmGroupActionButton() {
