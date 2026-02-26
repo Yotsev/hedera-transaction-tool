@@ -76,7 +76,7 @@ test.describe('Transaction tests', () => {
   test('Verify user can execute Account Create tx with complex key', async () => {
     const { newAccountId } = await transactionPage.createNewAccount({ isComplex: true });
     const allGeneratedKeys = transactionPage.getAllGeneratedPublicKeys();
-
+    console.log(`HERE`);
     const accountDetails = await transactionPage.mirrorGetAccountResponse(newAccountId ?? '');
     const protoBufEncodedBytes = accountDetails.accounts[0]?.key?.key;
     const decodedKeys = await transactionPage.decodeByteCode(protoBufEncodedBytes);
