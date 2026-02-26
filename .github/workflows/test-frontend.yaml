@@ -25,7 +25,7 @@ concurrency:
 jobs:
   build:
     name: Build | Front-end
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
 
     steps:
       - name: Checkout Code
@@ -58,7 +58,7 @@ jobs:
 
   test:
     name: Automation | ${{ matrix.test-suite.name }}
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     needs: build
     strategy:
       fail-fast: false
@@ -164,7 +164,7 @@ jobs:
 
   unit-test:
     name: Unit Tests | ${{ matrix.test-suite.name }}
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     strategy:
       fail-fast: false
       matrix:
