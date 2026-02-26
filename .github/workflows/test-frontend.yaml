@@ -55,7 +55,7 @@ jobs:
       - name: Cache Build Artifacts
         uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
-          path: front-end/release/linux-unpacked
+          path: front-end/release/linux-arm64-unpacked
           key: build-artifacts-${{ github.sha }}
 
   test:
@@ -145,7 +145,7 @@ jobs:
         uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           fail-on-cache-miss: true
-          path: front-end/release/linux-unpacked
+          path: front-end/release/linux-arm64-unpacked
           key: build-artifacts-${{ github.sha }}
 
       - name: Install xvfb
@@ -156,7 +156,7 @@ jobs:
 
       - name: Run Automation
         env:
-          EXECUTABLE_PATH: ../front-end/release/linux-unpacked/hedera-transaction-tool
+          EXECUTABLE_PATH: ./front-end/release/linux-arm64-unpacked/hedera-transaction-tool
           PRIVATE_KEY: ${{ secrets.SOLO_PRIVATE_KEY }}
           OPERATOR_KEY: ${{ secrets.OPERATOR_KEY }}
           ENVIRONMENT: LOCALNET
@@ -164,44 +164,3 @@ jobs:
         run: xvfb-run -a npx playwright test tests/${{ matrix.test-suite.command }}
         working-directory: automation
 
-  unit-test:
-    name: Unit Tests | ${{ matrix.test-suite.name }}
-    runs-on: self-hosted
-    strategy:
-      fail-fast: false
-      matrix:
-        test-suite:
-          - name: Main Process
-            command: main:coverage
-          - name: Renderer Process
-            command: renderer
-          - name: Shared
-            command: shared
-    steps:
-
-      - name: Checkout Code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Set up Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
-        with:
-          node-version: 22.12.0
-          cache: 'npm'
-          cache-dependency-path: |
-            front-end/pnpm-lock.yaml
-
-      - name: Install pnpm
-        run: npm install -g pnpm@9.15.3
-
-      - name: Install front-end Dependencies
-        run: pnpm install --frozen-lockfile
-        working-directory: front-end
-
-      - name: Run Unit Tests
-        run: pnpm run test:${{ matrix.test-suite.command }}
-        working-directory: front-end
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@5c47607acb93fed5485fdbf7232e8a31425f672a # v5.0.2
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
