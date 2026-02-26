@@ -95,11 +95,6 @@ jobs:
       - name: Install pnpm
         run: npm install -g pnpm@9.15.3
 
-      - name: Install Docker Compose Plugin
-        run: |
-          sudo curl -fLo /usr/local/lib/docker/cli-plugins/docker-compose https://github.com/docker/compose/releases/download/v2.29.1/docker-compose-linux-x86_64
-          sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
-
       - name: Install Automation Dependencies
         run: pnpm install --frozen-lockfile
         working-directory: automation
