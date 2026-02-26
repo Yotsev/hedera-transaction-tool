@@ -47,7 +47,7 @@ jobs:
         working-directory: front-end
 
       - name: Build Linux executable
-      env:
+        env:
           SNAPCRAFT_BUILD_ENVIRONMENT: host
         run: pnpm run build:linux
         working-directory: front-end
